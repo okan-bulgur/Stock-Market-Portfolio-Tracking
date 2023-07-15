@@ -1,9 +1,9 @@
 from tkinter import *
 
 from Screens import menuBar
-from Screens import mainScreen
 from Screens import newTransactionScreen as nts
 from Screens import mainScreen as ms
+from Screens import showAverageScreen as sas
 
 
 class screenManager:
@@ -29,6 +29,8 @@ class screenManager:
     def __init__(self):
         self.window = Tk()
         self.window.title(self.title)
+        icon = PhotoImage(file='res\\logo.png')
+        self.window.iconphoto(True, icon)
         self.window.geometry(f'{self.screenWidth}x{self.screenHeight}')
         self.openMainScreen()
         menuBar.createMenuBar(self, self.window)
@@ -50,4 +52,11 @@ class screenManager:
         self.window.title(nts.title)
         self. mainFrame = Frame(self.window)
         nts.createInputsArea(self.mainFrame)
+        self.mainFrame.pack(expand=True, fill=BOTH)
+
+    def openShowAverageScreen(self):
+        self.mainFrame.forget()
+        self.window.title(sas.title)
+        self. mainFrame = Frame(self.window)
+        sas.createScreen(self.mainFrame)
         self.mainFrame.pack(expand=True, fill=BOTH)

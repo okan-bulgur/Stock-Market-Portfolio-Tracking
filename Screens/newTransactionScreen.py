@@ -1,8 +1,10 @@
 import tkinter
 from tkinter import *
+from tkinter import messagebox
 from tkcalendar import Calendar
 from functools import partial
 import stockManager as stockM
+
 
 title = "New Transaction"
 
@@ -20,11 +22,11 @@ btnForegroundColor = '#F9F5E7'
 hoverBtnBackgroundColor = '#F0997D'
 hoverBtnForegroundColor = '#F9F5E7'
 
-date = StringVar
-type = StringVar
-name = StringVar
-price = IntVar
-lot = IntVar
+date = None
+type = None
+name = None
+price = None
+lot = None
 
 
 def createInputsArea(window):
@@ -132,6 +134,8 @@ def getPrice(inputBox, outputLabel):
     try:
         global price
         price = float(inputBox.get())
+        if price <= 0:
+            raise ValueError
         outputLabel.config(text=price)
     except ValueError:
         tkinter.messagebox.showwarning(title="Error", message="Invalid Price")
@@ -158,6 +162,8 @@ def getLot(inputBox, outputLabel):
     try:
         global lot
         lot = int(inputBox.get())
+        if lot <= 0:
+            raise ValueError
         outputLabel.config(text=lot)
     except ValueError:
         tkinter.messagebox.showwarning(title="Error", message="Invalid Lot Amount")
@@ -172,5 +178,14 @@ def createNewTransactionBtn(window, row, column, padY, padX):
 
 
 def createNewTransaction():
-    stock = {'Date': date, 'Type': type, 'Name': name, 'Price': price, 'Lot': lot}
-    stockM. addNewStock(stock)
+    global lot
+
+    if (date is None) or (type is None) or (name is None) or (price is None) or (lot is None):
+        tkinter.messagebox.showwarning(title="Error", message="Enter all values")
+        return
+
+    if type == 'Sell':
+        lot *= -1
+
+    stock = {'Date': [date], 'Type': [type], 'Stock': [name], 'Price': [price], 'Lot': [lot], 'Total': [price * lot]}
+    stockM.addNewStock(stock)

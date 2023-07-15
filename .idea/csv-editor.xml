@@ -3,35 +3,21 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\Files\Stocks\furkan.csv">
+        <entry key="\Files\Stocks\csv Files\EREGL.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\Files\Stocks\okan.csv">
+        <entry key="\Files\Stocks\csv Files\OKIDOKI.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\Files\Stocks\pel.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\Files\Stocks\sel.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\Files\Total\order_history.csv">
+        <entry key="\Files\Total\csv Files\order_history.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
