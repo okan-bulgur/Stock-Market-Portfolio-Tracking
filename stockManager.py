@@ -64,10 +64,16 @@ def updateMeanRow(df):
     return df
 
 
-def getAverage(stock):
+def getInformation(stock):
     stockCsvPath = f'Files\\Stocks\\csv Files\\{stock}.csv'
     df = pd.read_csv(stockCsvPath)
-    return df.iloc[-1]['Price']
+    information = {
+        'Stock': df.iloc[-1]['Stock'],
+        'Average': df.iloc[-1]['Price'],
+        'Lot': df.iloc[-1]['Lot'],
+        'Principal Invested': df.iloc[-1]['Total']
+    }
+    return information
 
 
 def getStocksList():

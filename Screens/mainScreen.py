@@ -9,7 +9,7 @@ screenHeight = 700
 fontSize = 12
 fontType = 'Arial'
 
-backgroundColor = '#F9F5E7'
+backgroundColor = '#FFFBF5'
 foregroundColor = '#A75D5D'
 
 btnBackgroundColor = '#D3756B'

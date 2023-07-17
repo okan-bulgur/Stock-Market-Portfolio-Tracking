@@ -3,7 +3,7 @@ from tkinter import *
 from Screens import menuBar
 from Screens import newTransactionScreen as nts
 from Screens import mainScreen as ms
-from Screens import showAverageScreen as sas
+from Screens import showInformationsScreen as sis
 
 
 class screenManager:
@@ -18,7 +18,7 @@ class screenManager:
     fontSize = 12
     fontType = 'Arial'
 
-    backgroundColor = '#F9F5E7'
+    backgroundColor = '#FFFBF5'
     foregroundColor = '#A75D5D'
 
     btnBackgroundColor = '#D3756B'
@@ -56,7 +56,7 @@ class screenManager:
 
     def openShowAverageScreen(self):
         self.mainFrame.forget()
-        self.window.title(sas.title)
+        self.window.title(sis.title)
         self. mainFrame = Frame(self.window)
-        sas.createScreen(self.mainFrame)
+        sis.createScreen(self.mainFrame)
         self.mainFrame.pack(expand=True, fill=BOTH)
