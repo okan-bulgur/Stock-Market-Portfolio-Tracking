@@ -3,14 +3,28 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\Files\Stocks\csv Files\EREGL.csv">
+        <entry key="\Files\Stocks\csv Files\EREGL.IS.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\Files\Stocks\csv Files\OKIDOKI.csv">
+        <entry key="\Files\Stocks\csv Files\ODAS.IS.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\Files\Stocks\csv Files\SISE.IS.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\Files\Total\csv Files\all_stocks.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -18,6 +32,13 @@
           </value>
         </entry>
         <entry key="\Files\Total\csv Files\order_history.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\Files\Total\xlsx Files\all_stocks.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

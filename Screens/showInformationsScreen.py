@@ -70,6 +70,7 @@ def showAverage(stock, window, row, column, padY, padX):
     global header, txtArea
 
     inf = sm.getInformation(stock)
+
     stc = inf['Stock']
     average = inf['Average']
     lot = inf['Lot']
