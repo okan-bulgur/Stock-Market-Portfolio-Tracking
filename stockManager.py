@@ -1,5 +1,4 @@
 import os
-import pandas as pd
 from yahoo_fin.stock_info import *
 
 
@@ -60,7 +59,7 @@ def addStock_StockFile(pathCsv, pathExcel, newStock):
 def addStock_AllStockFile(pathCsv, pathExcel, stockName):
     df = pd.read_excel(pathExcel)
     df.reset_index(drop=True, inplace=True)
-    newStock = getInformation(stockName)
+    newStock = getInformationByStock(stockName)
 
     lot = newStock['Lot']
     average = round(newStock['Average'], 2)
@@ -87,8 +86,6 @@ def addStock_AllStockFile(pathCsv, pathExcel, stockName):
         else:
             df = pd.concat([df[0:-1], updatedStock_df])
 
-    #df_style = df.style.applymap(paintRow, subset=['Change Percentage'])
-
     df = updateTotalRow(df)
 
     df.to_excel(pathExcel, index=False)
@@ -96,9 +93,9 @@ def addStock_AllStockFile(pathCsv, pathExcel, stockName):
 
 
 def updateTotalRow(df):
-    total_sum = df['Total'].sum()
-    currentTotal_sum = df['Current Total'].sum()
-    profit_sum = df['Profit'].sum()
+    total_sum = round(df['Total'].sum(), 2)
+    currentTotal_sum = round(df['Current Total'].sum(), 2)
+    profit_sum = round(df['Profit'].sum(), 2)
     totalChange = f'{round((currentTotal_sum - total_sum) * 100 / total_sum, 2)}%'
 
     total_df = pd.DataFrame({'Stock': ['-'], 'Lot': ['-'],
@@ -127,20 +124,6 @@ def updateMeanRow(df):
     return df
 
 
-def getInformation(stock):
-    stockCsvPath = f'Files\\Stocks\\csv Files\\{stock}.csv'
-    if not os.path.exists(stockCsvPath):
-        return
-    df = pd.read_csv(stockCsvPath)
-    information = {
-        'Stock': df.iloc[-1]['Stock'],
-        'Average': df.iloc[-1]['Price'],
-        'Lot': df.iloc[-1]['Lot'],
-        'Principal Invested': df.iloc[-1]['Total']
-    }
-    return information
-
-
 def getStocksList():
     historyCsvPath = 'Files\\Total\\csv Files\\order_history.csv'
     stocks = []
@@ -153,6 +136,87 @@ def getStocksList():
                 stocks.append(stock)
 
     return stocks
+
+
+def updateCurrentPrices(csvPath, excelPath):
+    df = pd.read_csv(csvPath)
+    for i in df.index:
+        stock = df.iloc[i]['Stock']
+        if stock == '-':
+            break
+
+        df.at[i, 'Price'] = round(get_live_price(stock), 2)
+
+    df.to_excel(excelPath, index=False)
+    df.to_csv(csvPath, index=False)
+
+
+def updateInformations():
+    stockCsvPath = 'Files\\Total\\csv Files\\all_stocks.csv'
+    stockExcelPath = 'Files\\Total\\xlsx Files\\all_stocks.xlsx'
+    if not os.path.exists(stockCsvPath):
+        return
+
+    updateCurrentPrices(stockCsvPath, stockExcelPath)
+
+    df = pd.read_csv(stockCsvPath)
+    for i in df.index:
+        stock = df.iloc[i]['Stock']
+        if stock == '-':
+            break
+        lot = float(df.iloc[i]['Lot'])
+        total = df.iloc[i]['Total']
+
+        price = round(get_live_price(stock), 2)
+        currentTotal = round(price * lot, 2)
+        profit = round(currentTotal - total, 2)
+        changePerc = round((currentTotal - total) * 100 / total, 2)
+
+        df.at[i, 'Price'] = price
+        df.at[i, 'Current Total'] = currentTotal
+        df.at[i, 'Profit'] = profit
+        df.at[i, 'Change Percentage'] = f'{changePerc}%'
+
+    df.to_excel(stockExcelPath, index=False)
+    df.to_csv(stockCsvPath, index=False)
+
+
+def getInformationByStock(stock):
+    updateInformations()
+    stockCsvPath = f'Files\\Total\\csv Files\\all_stocks.csv'
+    if not os.path.exists(stockCsvPath):
+        return
+    df = pd.read_csv(stockCsvPath)
+    information = {}
+    for i in df.index:
+        if df.iloc[i]['Stock'] == stock:
+            information = {
+                'Stock': df.iloc[i]['Stock'],
+                'Lot': df.iloc[i]['Lot'],
+                'Average': df.iloc[i]['Average'],
+                'Principal Invested': df.iloc[i]['Total'],
+                'Current Total': df.iloc[i]['Current Total'],
+                'Profit': df.iloc[i]['Profit'],
+                'Change Percentage': df.iloc[i]['Change Percentage']
+            }
+            break
+    return information
+
+
+def getInformation():
+    updateInformations()
+    stockCsvPath = f'Files\\Total\\csv Files\\all_stocks.csv'
+    if not os.path.exists(stockCsvPath):
+        return
+
+    df = pd.read_csv(stockCsvPath)
+    information = {
+        'Principal Invested': df.iloc[-1]['Total'],
+        'Current Total': df.iloc[-1]['Current Total'],
+        'Profit': df.iloc[-1]['Profit'],
+        'Change Percentage': df.iloc[-1]['Change Percentage']
+    }
+    return information
 
 
 """

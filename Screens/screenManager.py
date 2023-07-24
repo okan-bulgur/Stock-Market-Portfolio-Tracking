@@ -43,8 +43,8 @@ class screenManager:
         if self.mainFrame:
             self.mainFrame.forget()
         self.window.title(ms.title)
-        self. mainFrame = Frame(self.window)
-        ms.createScreen(self. mainFrame)
+        self.mainFrame = Frame(self.window)
+        ms.createScreen(self.mainFrame)
         self. mainFrame.pack(expand=True, fill=BOTH)
 
     def openAddNewTransactionScreen(self):

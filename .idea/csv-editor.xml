@@ -38,13 +38,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\Files\Total\xlsx Files\all_stocks.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
       </map>
     </option>
   </component>
