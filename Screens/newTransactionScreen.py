@@ -3,6 +3,9 @@ from tkinter import *
 from tkinter import messagebox
 from tkcalendar import Calendar
 from functools import partial
+
+from yahoo_fin.stock_info import get_quote_table
+
 import stockManager as stockM
 
 
@@ -184,8 +187,18 @@ def createNewTransaction():
         tkinter.messagebox.showwarning(title="Error", message="Enter all values")
         return
 
+    try:
+        get_quote_table(name)
+    except:
+        tkinter.messagebox.showwarning(title="Error", message=f"There are no stock named {name}")
+        return
+
     if type == 'Sell':
-        lot *= -1
+        if stockM.checkValidLotAmount(name, lot):
+            lot *= -1
+        else:
+            tkinter.messagebox.showwarning(title="Error", message="There are not enough lot for sell")
+            return
 
     stock = {'Date': [date], 'Type': [type], 'Stock': [name], 'Price': [price], 'Lot': [lot], 'Total': [price * lot]}
     stockM.addNewStock(stock)

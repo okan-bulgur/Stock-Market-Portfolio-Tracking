@@ -1,4 +1,5 @@
 import os
+
 from yahoo_fin.stock_info import *
 
 
@@ -24,7 +25,7 @@ def addNewStock(stock):
 
     addStock_TotalHistoryFile(historyCsvPath, historyExcelPath, newStock)
     addStock_StockFile(stockCsvPath, stockExcelPath, newStock)
-    addStock_AllStockFile(allStocksCsvPath, allStocksExcelPath, stockName)
+    addStock_AllStockFile(allStocksCsvPath, allStocksExcelPath, newStock)
 
 
 def createFilesIfNotExist(pathCsv, pathExcel, fieldNames):
@@ -56,14 +57,15 @@ def addStock_StockFile(pathCsv, pathExcel, newStock):
     df.to_csv(pathCsv, index=False)
 
 
-def addStock_AllStockFile(pathCsv, pathExcel, stockName):
+def addStock_AllStockFile(pathCsv, pathExcel, newStock):
     df = pd.read_excel(pathExcel)
     df.reset_index(drop=True, inplace=True)
-    newStock = getInformationByStock(stockName)
+    stockName = newStock['Stock'].values[0]
+    stock = getInformationByStock(stockName)
 
-    lot = newStock['Lot']
-    average = round(newStock['Average'], 2)
-    total = newStock['Principal Invested']
+    lot = stock['Lot'] + newStock['Lot'].values[0]
+    total = stock['Principal Invested'] + newStock['Total'].values[0]
+    average = round(total/lot, 2)
     price = round(get_live_price(stockName), 2)
     currentTotal = round(price * lot, 2)
     profit = round(currentTotal - total, 2)
@@ -182,12 +184,24 @@ def updateInformations():
 
 
 def getInformationByStock(stock):
+    information = {
+        'Stock': 0,
+        'Lot': 0,
+        'Average': 0,
+        'Principal Invested': 0,
+        'Current Total': 0,
+        'Profit': 0,
+        'Change Percentage': 0
+    }
+
     updateInformations()
     stockCsvPath = f'Files\\Total\\csv Files\\all_stocks.csv'
+
     if not os.path.exists(stockCsvPath):
-        return
+        return information
+
     df = pd.read_csv(stockCsvPath)
-    information = {}
+
     for i in df.index:
         if df.iloc[i]['Stock'] == stock:
             information = {
@@ -204,10 +218,19 @@ def getInformationByStock(stock):
 
 
 def getInformation():
+    information = {
+        'Principal Invested': 0,
+        'Current Total': 0,
+        'Profit': 0,
+        'Change Percentage': 0
+    }
+
     updateInformations()
+
     stockCsvPath = f'Files\\Total\\csv Files\\all_stocks.csv'
+
     if not os.path.exists(stockCsvPath):
-        return
+        return information
 
     df = pd.read_csv(stockCsvPath)
     information = {
@@ -219,13 +242,10 @@ def getInformation():
     return information
 
 
-"""
-def paintRow(val):
-    val = float(val.strip('%'))
-    color = 'paleturquoise2'
-    if val < 0:
-        color = 'lightcoral'
-    elif val > 0:
-        color = 'palegreen'
-    return f'background-color: {color}'
-"""
+def checkValidLotAmount(stockName, lot):
+    stockCsvPath = f'Files\\Stocks\\csv Files\\{stockName}.csv'
+    if not os.path.exists(stockCsvPath):
+        return False
+    df = pd.read_csv(stockCsvPath)
+
+    return df.iloc[-1]['Lot'] >= lot
