@@ -8,7 +8,6 @@ from yahoo_fin.stock_info import get_quote_table
 
 import stockManager as stockM
 
-
 title = "New Transaction"
 
 screenWidth = 1500
@@ -189,6 +188,8 @@ def createNewTransaction():
 
     try:
         get_quote_table(name)
+    except FutureWarning:
+        pass
     except:
         tkinter.messagebox.showwarning(title="Error", message=f"There are no stock named {name}")
         return

@@ -50,7 +50,7 @@ def addStock_StockFile(pathCsv, pathExcel, newStock):
     if len(df) == 0:
         df_stock = pd.concat([df, newStock])
     else:
-        df_stock = pd.concat([df[0:-1], newStock])
+        df_stock = pd.concat([df[:-1], newStock])
 
     df = updateMeanRow(df_stock)
     df.to_excel(pathExcel, index=False)
@@ -63,51 +63,73 @@ def addStock_AllStockFile(pathCsv, pathExcel, newStock):
     stockName = newStock['Stock'].values[0]
     stock = getInformationByStock(stockName)
 
-    lot = stock['Lot'] + newStock['Lot'].values[0]
+    lot = float(stock['Lot']) + float(newStock['Lot'].values[0])
     total = stock['Principal Invested'] + newStock['Total'].values[0]
-    average = round(total/lot, 2)
+    average = round(total / lot, 2)
     price = round(get_live_price(stockName), 2)
     currentTotal = round(price * lot, 2)
     profit = round(currentTotal - total, 2)
     change = f'{round((currentTotal - total) * 100 / total, 2)}%'
 
+    print(
+        f"Lot: {lot} total: {total} average: {average} price: {price} currentTotal: {currentTotal} profit: {profit} change: {change}")
+
     updatedStock = {'Stock': [stockName], 'Lot': [lot], 'Average': [average], 'Total': [total], 'Price': [price],
                     'Current Total': [currentTotal], 'Profit': [profit], 'Change Percentage': [change]}
     updatedStock_df = pd.DataFrame(updatedStock)
+    print(updatedStock_df)
 
     check = False
     for i in df.index:
-        stock = df['Stock'][i]
+        stock = df.loc[i, 'Stock']
         if stock == stockName:
-            df.iloc[i] = updatedStock_df
+            df.loc[i] = updatedStock_df.loc[0]
+            df = df.drop(df.index[-1])
             check = True
+            break
 
     if not check:
         if len(df) == 0:
             df = pd.concat([df, updatedStock_df])
         else:
-            df = pd.concat([df[0:-1], updatedStock_df])
+            print("df[:-1] ", df[:-1])
+            print("total_df ", updatedStock_df)
+            df = pd.concat([df[:-1], updatedStock_df])
+            print("df ", df)
+            print("df[:-1] ", df[:-1])
 
     df = updateTotalRow(df)
+
+    print("df3: ", df)
 
     df.to_excel(pathExcel, index=False)
     df.to_csv(pathCsv, index=False)
 
 
 def updateTotalRow(df):
+
     total_sum = round(df['Total'].sum(), 2)
     currentTotal_sum = round(df['Current Total'].sum(), 2)
     profit_sum = round(df['Profit'].sum(), 2)
     totalChange = f'{round((currentTotal_sum - total_sum) * 100 / total_sum, 2)}%'
 
-    total_df = pd.DataFrame({'Stock': ['-'], 'Lot': ['-'],
-                             'Average': ['-'], 'Total': [total_sum],
-                             'Price': ['-'], 'Current Total': [currentTotal_sum],
-                             'Profit': [profit_sum], 'Change Percentage': [totalChange]})
+    total_df = pd.DataFrame(
+        {
+            'Stock': ['-'], 'Lot': ['-'],
+            'Average': ['-'], 'Total': [total_sum],
+            'Price': ['-'], 'Current Total': [currentTotal_sum],
+            'Profit': [profit_sum], 'Change Percentage': [totalChange]
+        }
+    )
 
     df.reset_index(drop=True, inplace=True)
     total_df.reset_index(drop=True, inplace=True)
+
+    print("df1: ", df)
+
     df = pd.concat([df, total_df])
+
+    print("df2: ", df)
 
     return df
 
@@ -115,7 +137,7 @@ def updateTotalRow(df):
 def updateMeanRow(df):
     lot_sum = df['Lot'].sum()
     total_sum = df['Total'].sum()
-    average = total_sum / lot_sum
+    average = round(total_sum / lot_sum, 2)
     total_df = pd.DataFrame({'Date': ['-'], 'Type': ['Total'], 'Stock': [df['Stock'].values[0]],
                              'Price': [average], 'Lot': [lot_sum], 'Total': [total_sum]})
 
