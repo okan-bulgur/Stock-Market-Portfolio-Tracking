@@ -1,10 +1,9 @@
 import tkinter
 from tkinter import *
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 from tkcalendar import Calendar
 from functools import partial
-
-from yahoo_fin.stock_info import get_quote_table
+from yahoo_fin.stock_info import *
 
 import stockManager as stockM
 
@@ -30,14 +29,31 @@ name = None
 price = None
 lot = None
 
+filePath = None
+
 
 def createInputsArea(window):
+    manuelFrame = Frame(window)
+    pdfFrame = Frame(window)
+
+    manuelFrame.place(relx=0, rely=0, relwidth=0.5, relheight=1)
+    pdfFrame.place(relx=0.5, rely=0, relwidth=0.5, relheight=1)
+
+    createManuelArea(manuelFrame)
+    createPdfArea(pdfFrame)
+
+
+def createManuelArea(window):
     createTypeBtn(window, 0, 0, 10, 10)
     createCalendarBtn(window, 1, 0, 10, 10)
     createNameBox(window, 2, 0, 10, 10)
     createPriceBox(window, 4, 0, 10, 10)
     createLotBox(window, 6, 0, 10, 10)
     createNewTransactionBtn(window, 8, 0, 10, 10)
+
+
+def createPdfArea(window):
+    createPdfElements(window)
 
 
 def createCalendarBtn(window, row, column, padY, padX):
@@ -111,7 +127,7 @@ def createNameBox(window, row, column, padY, padX):
 
 def getName(inputBox, outputLabel):
     global name
-    name = inputBox.get()
+    name = inputBox.get().upper()
     outputLabel.config(text=name)
 
 
@@ -187,9 +203,7 @@ def createNewTransaction():
         return
 
     try:
-        get_quote_table(name)
-    except FutureWarning:
-        pass
+        get_live_price(name)
     except:
         tkinter.messagebox.showwarning(title="Error", message=f"There are no stock named {name}")
         return
@@ -201,5 +215,58 @@ def createNewTransaction():
             tkinter.messagebox.showwarning(title="Error", message="There are not enough lot for sell")
             return
 
-    stock = {'Date': [date], 'Type': [type], 'Stock': [name], 'Price': [price], 'Lot': [lot], 'Total': [price * lot]}
+    stock = {'Date': [date], 'Type': [type], 'Stock': [name], 'Price': [price], 'Lot': [lot], 'Total': [round(price * lot, 3)]}
     stockM.addNewStock(stock)
+
+
+def getPdfPath(txtArea, type):
+    global filePath
+    if type == 'Folder':
+        filePath = filedialog.askdirectory()
+    else:
+        filePath = filedialog.askopenfilename()
+
+    if filePath == "":
+        return
+
+    stockM.processingPdfInf(filePath, type)
+    stockM.showPdfInf(txtArea)
+
+
+def createPdfElements(window):
+    txtArea = Text(window, wrap='none', bg='#FAF8F1', fg=foregroundColor, font=(fontType, fontSize + 5), state='disabled')
+    txtArea.place(relx=0, rely=0.2, relheight=0.7, relwidth=1)
+
+    scrollbar_y = Scrollbar(txtArea, command=txtArea.yview)
+    scrollbar_x = Scrollbar(txtArea, orient=HORIZONTAL, command=txtArea.xview)
+    txtArea.config(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+    scrollbar_y.pack(side=RIGHT, fill=Y)
+    scrollbar_x.pack(side=BOTTOM, fill=X)
+
+    approveBtn = Button(window, text="Approve ✓", font=(fontType, fontSize))
+    approveBtn.config(fg=btnForegroundColor, bg=btnBackgroundColor,
+                      activeforeground=hoverBtnForegroundColor,
+                      activebackground=hoverBtnBackgroundColor)
+    approveBtn.config(command=stockM.approvePdfInf)
+    approveBtn.place(relx=0.1, rely=0.9, relheight=0.1, relwidth=0.3)
+
+    cancelBtn = Button(window, text="Cancel", font=(fontType, fontSize))
+    cancelBtn.config(fg=btnForegroundColor, bg=btnBackgroundColor,
+                     activeforeground=hoverBtnForegroundColor,
+                     activebackground=hoverBtnBackgroundColor)
+    cancelBtn.config(command=partial(stockM.cancelPdfInf, txtArea))
+    cancelBtn.place(relx=0.6, rely=0.9, relheight=0.1, relwidth=0.3)
+
+    fileBtn = Button(window, text="Select Pdf By File", font=(fontType, fontSize))
+    fileBtn.config(fg=btnForegroundColor, bg=btnBackgroundColor,
+                   activeforeground=hoverBtnForegroundColor,
+                   activebackground=hoverBtnBackgroundColor)
+    fileBtn.config(command=partial(getPdfPath, txtArea, 'File'))
+    fileBtn.place(relx=0.1, rely=0.1, relheight=0.05, relwidth=0.3)
+
+    folderBtn = Button(window, text="Select Pdf By Folder", font=(fontType, fontSize))
+    folderBtn.config(fg=btnForegroundColor, bg=btnBackgroundColor,
+                     activeforeground=hoverBtnForegroundColor,
+                     activebackground=hoverBtnBackgroundColor)
+    folderBtn.config(command=partial(getPdfPath, txtArea, 'Folder'))
+    folderBtn.place(relx=0.6, rely=0.1, relheight=0.05, relwidth=0.3)

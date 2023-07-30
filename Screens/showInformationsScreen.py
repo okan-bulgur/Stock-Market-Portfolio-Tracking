@@ -47,14 +47,15 @@ def createStocksBtn(frame):
         btn = Checkbutton(frame, text=stock, variable=stocksVar[i], fg=foregroundColor,
                           bg=backgroundColor, font=(fontType, fontSize, 'bold'))
         row = i % rowCycle
-        if row == 0: column += 1
+        if row == 0:
+            column += 1
         btn.grid(row=row, column=column, padx=10, pady=10)
 
     showBtn = Button(frame, text="Show", font=(fontType, fontSize))
     showBtn.config(fg=btnForegroundColor, bg=btnBackgroundColor,
                    activeforeground=hoverBtnForegroundColor, activebackground=hoverBtnBackgroundColor)
     showBtn.config(command=partial(showInformations, stocks, stocksVar))
-    showBtn.grid(row=rowCycle+1, column=0, padx=10, pady=10)
+    showBtn.grid(row=rowCycle + 1, column=0, padx=10, pady=10)
 
 
 def createTextArea(frame):
@@ -64,14 +65,16 @@ def createTextArea(frame):
                    font=(fontType, fontSize + 8))
     header.place(relx=0, rely=0, relheight=0.1, relwidth=1)
 
-    txtArea = Text(frame, bg='#FAF8F1', fg=foregroundColor, font=(fontType, fontSize + 5), state='disabled')
+    txtArea = Text(frame, wrap='none', bg='#FAF8F1', fg=foregroundColor, font=(fontType, fontSize + 5), state='disabled')
     txtArea.place(relx=0, rely=0.1, relheight=0.9, relwidth=1)
 
-    scroll_y = Scrollbar(txtArea)
-    scroll_y.pack(side=RIGHT, fill=Y)
+    scrollbar_y = Scrollbar(txtArea, command=txtArea.yview)
+    scrollbar_x = Scrollbar(txtArea, orient=HORIZONTAL, command=txtArea.xview)
 
-    txtArea.config(yscrollcommand=scroll_y.set)
-    scroll_y.config(command=txtArea.yview)
+    txtArea.config(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+
+    scrollbar_y.pack(side=RIGHT, fill=Y)
+    scrollbar_x.pack(side=BOTTOM, fill=X)
 
 
 def showInformations(stocks, stocksVar):
@@ -83,6 +86,8 @@ def showInformations(stocks, stocksVar):
     selectedStocks = [stock.get() for stock in stocksVar]
     selectedStocks = [stocks[i] for i in range(len(stocks)) if selectedStocks[i] == 1]
 
+    print(selectedStocks)
+
     for stock in selectedStocks:
         inf = sm.getInformationByStock(stock)
 
@@ -93,8 +98,11 @@ def showInformations(stocks, stocksVar):
         currentTotal = inf['Current Total']
         profit = inf['Profit']
         changePerc = inf['Change Percentage']
+        commission = inf['Commission']
+
         txt = f'●  Stock : {stc} \t Lot : {lot} \t Average : {average} \t Principal Invested : {principalInvested} \t Current Total : {currentTotal}' \
-              f' \t Profit : {profit} \t Change Percentage : {changePerc}\n'
+              f' \t Profit : {profit} \t Change Percentage : {changePerc} \t Commission : {commission} \t \n'
 
         txtArea.insert('end', txt)
-        txtArea.config(state='disable')
+
+    txtArea.config(state='disable')

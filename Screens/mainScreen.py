@@ -48,7 +48,7 @@ def infPart(frame):
 def updateInfLabel():
     global infLabel
 
-    inf = sm.getInformation()
+    inf = sm.getPortfolioInf()
 
     principalInvested = inf['Principal Invested']
     currentTotal = inf['Current Total']

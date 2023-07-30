@@ -1,4 +1,6 @@
-Stock,Lot,Average,Total,Price,Current Total,Profit,Change Percentage
-ODAS.IS,20,4,80.0,11.7,234.0,154.0,192.5%
-EREGL.IS,10.0,4.0,40.0,38.46,384.6,344.6,861.5%
--,-,-,120.0,-,618.6,498.6,415.5%
+Stock,Lot,Average,Total,Price,Current Total,Profit,Change Percentage,Commission
+EREGL.IS,35.0,32.163,1125.7,38.46,1346.1,220.4,19.579%,2.35
+SISE.IS,30.0,34.107,1023.2,49.94,1498.2,475.0,46.423%,2.14
+THYAO.IS,3.0,107.7,323.1,235.0,705.0,381.9,118.199%,0.68
+TUKAS.IS,25.0,20.32,508.0,10.08,252.0,-256.0,-50.394%,1.06
+-,-,-,2980.0,-,3801.3,821.3,27.56%,6.23
