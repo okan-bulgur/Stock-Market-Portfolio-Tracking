@@ -3,56 +3,7 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\Files\Stocks\csv Files\AKBNK.IS.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\Files\Stocks\csv Files\ASDASD.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\Files\Stocks\csv Files\CANTE.IS.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\Files\Stocks\csv Files\EREGL.IS.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\Files\Stocks\csv Files\FROTO.IS.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\Files\Stocks\csv Files\KCHOL.IS.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\Files\Stocks\csv Files\KRDMD.IS.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\Files\Stocks\csv Files\ODAS.IS.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -74,20 +25,6 @@
           </value>
         </entry>
         <entry key="\Files\Stocks\csv Files\TUKAS.IS.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\Files\Stocks\csv Files\a.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\Files\Stocks\csv Files\w.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

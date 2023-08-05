@@ -8,4 +8,4 @@ def createMenuBar(sm, window):
     fileMenu = Menu(menubar, tearoff=0)
     menubar.add_command(label="Home", command=lambda: sm.openMainScreen())
     menubar.add_command(label="Add New Transaction", command=lambda: sm.openAddNewTransactionScreen())
-    menubar.add_command(label="Display Averages", command=lambda: sm.openShowAverageScreen())
+    menubar.add_command(label="Stocks Informations", command=lambda: sm.openShowAverageScreen())
