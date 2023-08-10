@@ -28,6 +28,7 @@ type = None
 name = None
 price = None
 lot = None
+commission = None
 
 filePath = None
 
@@ -49,7 +50,8 @@ def createManuelArea(window):
     createNameBox(window, 2, 0, 10, 10)
     createPriceBox(window, 4, 0, 10, 10)
     createLotBox(window, 6, 0, 10, 10)
-    createNewTransactionBtn(window, 8, 0, 10, 10)
+    createCommissionBox(window, 8, 0, 10, 10)
+    createNewTransactionBtn(window, 10, 0, 10, 10)
 
 
 def createPdfArea(window):
@@ -176,6 +178,23 @@ def createLotBox(window, row, column, padY, padX):
     enterBtn.grid(row=row + 1, column=column + 1, pady=padY, padx=padX)
 
 
+def createCommissionBox(window, row, column, padY, padX):
+    headerLabel = Label(window, text="Enter Commision", foreground=foregroundColor, font=(fontType, fontSize))
+    headerLabel.grid(row=row, column=column, pady=padY, padx=padX)
+
+    inputBox = Entry(window)
+    inputBox.grid(row=row + 1, column=column, pady=padY, padx=padX - padX / 2)
+
+    outputLabel = Label(window, text="", foreground=foregroundColor, font=(fontType, fontSize))
+    outputLabel.grid(row=row + 1, column=column + 2, pady=padY, padx=padX)
+
+    enterBtn = Button(window, text="✓", fg=btnForegroundColor, bg=btnBackgroundColor,
+                      activeforeground=hoverBtnForegroundColor, activebackground=hoverBtnBackgroundColor,
+                      font=(fontType, fontSize))
+    enterBtn.config(command=partial(getCommission, inputBox, outputLabel))
+    enterBtn.grid(row=row + 1, column=column + 1, pady=padY, padx=padX)
+
+
 def getLot(inputBox, outputLabel):
     try:
         global lot
@@ -185,6 +204,17 @@ def getLot(inputBox, outputLabel):
         outputLabel.config(text=lot)
     except ValueError:
         tkinter.messagebox.showwarning(title="Error", message="Invalid Lot Amount")
+
+
+def getCommission(inputBox, outputLabel):
+    try:
+        global commission
+        commission = float(inputBox.get())
+        if commission <= 0:
+            raise ValueError
+        outputLabel.config(text=commission)
+    except ValueError:
+        tkinter.messagebox.showwarning(title="Error", message="Invalid Commission Amount")
 
 
 def createNewTransactionBtn(window, row, column, padY, padX):
@@ -215,7 +245,7 @@ def createNewTransaction():
             tkinter.messagebox.showwarning(title="Error", message="There are not enough lot for sell")
             return
 
-    stock = {'Date': [date], 'Type': [type], 'Stock': [name], 'Price': [price], 'Lot': [lot], 'Total': [round(price * lot, 3)]}
+    stock = {'Date': [date], 'Type': [type], 'Stock': [name], 'Price': [price], 'Lot': [lot], 'Total': [round(price * lot, 3)], 'Commission': [commission]}
     stockM.addNewStock(stock)
 
 

@@ -1,10 +1,8 @@
 import os
 import glob
-
 import tabula
 from tkinter import *
 from yahoo_fin.stock_info import *
-
 
 historyExcelPath = 'Files\\Total\\xlsx Files\\order_history.xlsx'
 allStocksExcelPath = 'Files\\Total\\xlsx Files\\all_stocks.xlsx'
@@ -13,26 +11,20 @@ historyCsvPath = 'Files\\Total\\csv Files\\order_history.csv'
 allStocksCsvPath = 'Files\\Total\\csv Files\\all_stocks.csv'
 
 fieldNames = ['Date', 'Type', 'Stock', 'Price', 'Lot', 'Total', 'Commission']
-fieldNames2 = ['Stock', 'Lot', 'Average', 'Total', 'Price', 'Current Total', 'Profit', 'Change Percentage', 'Commission']
-
+fieldNames2 = ['Stock', 'Lot', 'Average', 'Total', 'Price', 'Current Total', 'Profit', 'Change Percentage',
+               'Commission']
 
 pdfResult = None
 
 
 def addNewStock(stock):
     newStock = pd.DataFrame(stock)
-    stockName = newStock['Stock'].values[0]
     newStock.reset_index(drop=True, inplace=True)
 
-    stockExcelPath = f'Files\\Stocks\\xlsx Files\\{stockName}.xlsx'
-    stockCsvPath = f'Files\\Stocks\\csv Files\\{stockName}.csv'
-
     createFilesIfNotExist(historyCsvPath, historyExcelPath, fieldNames)
-    createFilesIfNotExist(stockCsvPath, stockExcelPath, fieldNames)
     createFilesIfNotExist(allStocksCsvPath, allStocksExcelPath, fieldNames2)
 
     addStock_TotalHistoryFile(historyCsvPath, historyExcelPath, newStock)
-    addStock_StockFile(stockCsvPath, stockExcelPath, newStock, historyCsvPath)
     addStock_AllStockFile(allStocksCsvPath, allStocksExcelPath, newStock)
 
 
@@ -43,10 +35,12 @@ def createFilesIfNotExist(pathCsv, pathExcel, fieldNames):
         df.to_csv(pathCsv, index=False)
 
 
+'''
 def groupStock(pathCsv):
     df = pd.read_csv(pathCsv)
     gk = df.groupby(['Stock'])
     return gk
+'''
 
 
 def addStock_TotalHistoryFile(pathCsv, pathExcel, newStock):
@@ -57,13 +51,28 @@ def addStock_TotalHistoryFile(pathCsv, pathExcel, newStock):
     df.to_csv(pathCsv, index=False)
 
 
-def addStock_StockFile(pathCsv, pathExcel, newStock, historyCsvPath):
-    gk = groupStock(historyCsvPath)
-    df = gk.get_group((newStock['Stock'].values[0]))
-    df.reset_index(drop=True, inplace=True)
-    df = updateTotalRow_StockFile(df)
-    df.to_excel(pathExcel, index=False)
-    df.to_csv(pathCsv, index=False)
+def calculateValues(stock, newStock):
+    stockName = newStock['Stock'].values[0]
+    lot = float(stock['Lot']) + float(newStock['Lot'].values[0])
+    total = round(stock['Principal Invested'] + newStock['Total'].values[0], 3)
+    price = round(get_live_price(stockName), 3)
+    currentTotal = round(price * lot, 3)
+    commission = round(stock['Commission'] + newStock['Commission'].values[0], 3)
+
+    if lot == 0:
+        average = 0
+        profit = total * -1
+        change = f'{0}%'
+    else:
+        average = round(total / lot, 3)
+        profit = round(currentTotal - total, 3)
+        change = f'{round((currentTotal - total) * 100 / total, 3)}%'
+
+    updatedStock = {'Stock': [stockName], 'Lot': [lot], 'Average': [average], 'Total': [total], 'Price': [price],
+                    'Current Total': [currentTotal], 'Profit': [profit], 'Change Percentage': [change],
+                    'Commission': [commission]}
+
+    return updatedStock
 
 
 def addStock_AllStockFile(pathCsv, pathExcel, newStock):
@@ -72,17 +81,7 @@ def addStock_AllStockFile(pathCsv, pathExcel, newStock):
     stockName = newStock['Stock'].values[0]
     stock = getInformationByStock(stockName)
 
-    lot = float(stock['Lot']) + float(newStock['Lot'].values[0])
-    total = stock['Principal Invested'] + newStock['Total'].values[0]
-    average = round(total / lot, 3)
-    price = round(get_live_price(stockName), 3)
-    currentTotal = round(price * lot, 3)
-    profit = round(currentTotal - total, 3)
-    change = f'{round((currentTotal - total) * 100 / total, 3)}%'
-    commission = round(stock['Commission'] + newStock['Commission'].values[0], 3)
-
-    updatedStock = {'Stock': [stockName], 'Lot': [lot], 'Average': [average], 'Total': [total], 'Price': [price],
-                    'Current Total': [currentTotal], 'Profit': [profit], 'Change Percentage': [change], 'Commission': [commission]}
+    updatedStock = calculateValues(stock, newStock)
     updatedStock_df = pd.DataFrame(updatedStock)
 
     check = False
@@ -107,10 +106,13 @@ def addStock_AllStockFile(pathCsv, pathExcel, newStock):
 
 
 def updateTotalRow_AllStockFile(df):
-    total_sum = round(df['Total'].sum(), 3)
+    total_sum = round(df[df['Total'] >= 0]['Total'].sum(), 3)
     currentTotal_sum = round(df['Current Total'].sum(), 3)
     profit_sum = round(df['Profit'].sum(), 3)
-    totalChange = f'{round((currentTotal_sum - total_sum) * 100 / total_sum, 3)}%'
+    if total_sum == 0:
+        total_change = 0
+    else:
+        total_change = f'{round((currentTotal_sum - total_sum) * 100 / total_sum, 3)}%'
     commission_sum = round(df['Commission'].sum(), 3)
 
     total_df = pd.DataFrame(
@@ -118,7 +120,7 @@ def updateTotalRow_AllStockFile(df):
             'Stock': ['-'], 'Lot': ['-'],
             'Average': ['-'], 'Total': [total_sum],
             'Price': ['-'], 'Current Total': [currentTotal_sum],
-            'Profit': [profit_sum], 'Change Percentage': [totalChange],
+            'Profit': [profit_sum], 'Change Percentage': [total_change],
             'Commission': [commission_sum]
         }
     )
@@ -126,22 +128,6 @@ def updateTotalRow_AllStockFile(df):
     df.reset_index(drop=True, inplace=True)
     total_df.reset_index(drop=True, inplace=True)
 
-    df = pd.concat([df, total_df])
-
-    return df
-
-
-def updateTotalRow_StockFile(df):
-    lot_sum = float(df['Lot'].sum())
-    total_sum = float(df['Total'].sum())
-    average = round(total_sum / lot_sum, 3)
-    commission_sum = round(df['Commission'].sum(), 3)
-    total_df = pd.DataFrame({'Date': ['-'], 'Type': ['Total'], 'Stock': [df['Stock'].values[0]],
-                             'Price': [average], 'Lot': [lot_sum], 'Total': [total_sum],
-                             'Commission': [commission_sum]})
-
-    df.reset_index(drop=True, inplace=True)
-    total_df.reset_index(drop=True, inplace=True)
     df = pd.concat([df, total_df])
 
     return df
@@ -266,12 +252,10 @@ def getPortfolioInf():
 
 
 def checkValidLotAmount(stockName, lot):
-    stockCsvPath = f'Files\\Stocks\\csv Files\\{stockName}.csv'
-    if not os.path.exists(stockCsvPath):
+    inf = getInformationByStock(stockName)
+    if inf['Stock'] == 0:
         return False
-    df = pd.read_csv(stockCsvPath)
-
-    return df.iloc[-1]['Lot'] >= lot
+    return float(inf['Lot']) >= lot
 
 
 def extract_relevant_info(table):
