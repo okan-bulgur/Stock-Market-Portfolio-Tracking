@@ -1,18 +1,23 @@
 import os
 import glob
+from datetime import datetime
+import pandas as pd
 import tabula
 from tkinter import *
 from yahoo_fin.stock_info import *
 
-historyExcelPath = 'Files\\Total\\xlsx Files\\order_history.xlsx'
-allStocksExcelPath = 'Files\\Total\\xlsx Files\\all_stocks.xlsx'
-
 historyCsvPath = 'Files\\Total\\csv Files\\order_history.csv'
 allStocksCsvPath = 'Files\\Total\\csv Files\\all_stocks.csv'
+stocksListCsvPath = 'Files\\Total\\csv Files\\stocks_list.csv'
 
-fieldNames = ['Date', 'Type', 'Stock', 'Price', 'Lot', 'Total', 'Commission']
-fieldNames2 = ['Stock', 'Lot', 'Average', 'Total', 'Price', 'Current Total', 'Profit', 'Change Percentage',
-               'Commission']
+historyExcelPath = 'Files\\Total\\xlsx Files\\order_history.xlsx'
+allStocksExcelPath = 'Files\\Total\\xlsx Files\\all_stocks.xlsx'
+stocksListExcelPath = 'Files\\Total\\xlsx Files\\stocks_list.xlsx'
+
+fieldNames_history = ['Date', 'Type', 'Stock', 'Price', 'Lot', 'Total', 'Commission']
+fieldNames_allStocks = ['Stock', 'Lot', 'Average', 'Total', 'Price', 'Current Total', 'Profit', 'Change Percentage',
+                        'Commission']
+fieldNames_stocksList = ['Stock', 'Update Date']
 
 pdfResult = None
 
@@ -21,11 +26,13 @@ def addNewStock(stock):
     newStock = pd.DataFrame(stock)
     newStock.reset_index(drop=True, inplace=True)
 
-    createFilesIfNotExist(historyCsvPath, historyExcelPath, fieldNames)
-    createFilesIfNotExist(allStocksCsvPath, allStocksExcelPath, fieldNames2)
+    createFilesIfNotExist(historyCsvPath, historyExcelPath, fieldNames_history)
+    createFilesIfNotExist(allStocksCsvPath, allStocksExcelPath, fieldNames_allStocks)
+    createFilesIfNotExist(stocksListCsvPath, stocksListExcelPath, fieldNames_stocksList)
 
     addStock_TotalHistoryFile(historyCsvPath, historyExcelPath, newStock)
-    addStock_AllStockFile(allStocksCsvPath, allStocksExcelPath, newStock)
+    #addStock_AllStockFile(allStocksCsvPath, allStocksExcelPath, newStock)
+    addStock_StocksListFile(stocksListCsvPath, stocksListExcelPath, newStock)
 
 
 def createFilesIfNotExist(pathCsv, pathExcel, fieldNames):
@@ -35,22 +42,16 @@ def createFilesIfNotExist(pathCsv, pathExcel, fieldNames):
         df.to_csv(pathCsv, index=False)
 
 
-'''
-def groupStock(pathCsv):
-    df = pd.read_csv(pathCsv)
-    gk = df.groupby(['Stock'])
-    return gk
-'''
-
-
 def addStock_TotalHistoryFile(pathCsv, pathExcel, newStock):
     df = pd.read_csv(pathCsv)
     df.reset_index(drop=True, inplace=True)
     df = pd.concat([df, newStock])
     df.to_excel(pathExcel, index=False)
     df.to_csv(pathCsv, index=False)
+    update_AllStockFile(newStock['Stock'].values[0])
 
 
+'''
 def calculateValues(stock, newStock):
     stockName = newStock['Stock'].values[0]
     lot = float(stock['Lot']) + float(newStock['Lot'].values[0])
@@ -73,8 +74,10 @@ def calculateValues(stock, newStock):
                     'Commission': [commission]}
 
     return updatedStock
+'''
 
 
+'''
 def addStock_AllStockFile(pathCsv, pathExcel, newStock):
     df = pd.read_csv(pathCsv)
     df.reset_index(drop=True, inplace=True)
@@ -103,34 +106,7 @@ def addStock_AllStockFile(pathCsv, pathExcel, newStock):
 
     df.to_excel(pathExcel, index=False)
     df.to_csv(pathCsv, index=False)
-
-
-def updateTotalRow_AllStockFile(df):
-    total_sum = round(df[df['Total'] >= 0]['Total'].sum(), 3)
-    currentTotal_sum = round(df['Current Total'].sum(), 3)
-    profit_sum = round(df['Profit'].sum(), 3)
-    if total_sum == 0:
-        total_change = 0
-    else:
-        total_change = f'{round((currentTotal_sum - total_sum) * 100 / total_sum, 3)}%'
-    commission_sum = round(df['Commission'].sum(), 3)
-
-    total_df = pd.DataFrame(
-        {
-            'Stock': ['-'], 'Lot': ['-'],
-            'Average': ['-'], 'Total': [total_sum],
-            'Price': ['-'], 'Current Total': [currentTotal_sum],
-            'Profit': [profit_sum], 'Change Percentage': [total_change],
-            'Commission': [commission_sum]
-        }
-    )
-
-    df.reset_index(drop=True, inplace=True)
-    total_df.reset_index(drop=True, inplace=True)
-
-    df = pd.concat([df, total_df])
-
-    return df
+'''
 
 
 def getStocksList():
@@ -258,6 +234,193 @@ def checkValidLotAmount(stockName, lot):
     return float(inf['Lot']) >= lot
 
 
+# All Stock File Part
+
+def groupStock(pathCsv, stock):
+    df = pd.read_csv(pathCsv)
+    gk = df.groupby('Stock')
+
+    for name, group in gk:
+        if stock == name:
+            return group.reset_index(drop=True)
+    return None
+
+
+def calculateStocksInf(stockName):
+    gk = groupStock(historyCsvPath, stockName)
+    print(f'gk:\n{gk}')
+
+    stock = gk.loc[0]['Stock']
+    lot = gk['Lot'].sum()
+    total = gk['Total'].sum()
+    average = round(total / lot, 3)
+    price = round(get_live_price(stock), 3)
+    currentTotal = round(lot * price, 3)
+    profit = round(currentTotal - total, 3)
+    changePerc = f'{round((currentTotal - total) * 100 / total, 3)}%'
+    commission = round(gk['Commission'].sum(), 3)
+
+    if lot == 0:
+        average = 0
+        profit = total * -1
+        changePerc = f'{0}%'
+
+    updatedStock = [stock, lot, average, total, price, currentTotal, profit, changePerc, commission]
+
+    return updatedStock
+
+
+def updateTotalRow_AllStockFile(df):
+    total_sum = round(df[df['Total'] >= 0]['Total'].sum(), 3)
+    currentTotal_sum = round(df['Current Total'].sum(), 3)
+    profit_sum = round(df['Profit'].sum(), 3)
+    if total_sum == 0:
+        total_change = 0
+    else:
+        total_change = f'{round((currentTotal_sum - total_sum) * 100 / total_sum, 3)}%'
+    commission_sum = round(df['Commission'].sum(), 3)
+
+    total_df = pd.DataFrame(
+        {
+            'Stock': ['-'], 'Lot': ['-'],
+            'Average': ['-'], 'Total': [total_sum],
+            'Price': ['-'], 'Current Total': [currentTotal_sum],
+            'Profit': [profit_sum], 'Change Percentage': [total_change],
+            'Commission': [commission_sum]
+        }
+    )
+
+    df.reset_index(drop=True, inplace=True)
+    total_df.reset_index(drop=True, inplace=True)
+    df = pd.concat([df, total_df])
+
+    return df
+
+
+def update_AllStockFile(stock):
+    if not os.path.exists(allStocksCsvPath):
+        return
+
+    df = pd.read_csv(allStocksCsvPath)
+
+    for ind in df.index:
+        if df.loc[ind]['Stock'] == '-':
+            break
+        if df.loc[ind]['Stock'] == stock:
+            stock = df.loc[ind]['Stock']
+            print("Stock: ", stock)
+            df_stock = calculateStocksInf(stock)
+            print(f'df_stock:\n{df_stock}')
+            df.loc[ind] = df_stock
+            print(f'df.loc[ind]:\n{df.loc[ind]}')
+
+    print(f'\n\ndf:\n{df}')
+    df = updateTotalRow_AllStockFile(df)
+    df.reset_index(drop=True, inplace=True)
+    df.to_csv(allStocksCsvPath, index=False)
+    df.to_excel(allStocksExcelPath, index=False)
+
+
+# Stocks Lists Part
+
+
+def getSplitRatio(stock, date):
+    try:
+        stock_splits = get_splits(stock)
+
+        split_date = None
+        split_ratio = 0
+
+        for split_date, split_event in zip(stock_splits.index, stock_splits['splitRatio']):
+            split_ratio = split_event
+            split_ratio = split_ratio.split(":")
+            numerator = float(split_ratio[0])
+            denominator = float(split_ratio[1])
+            split_ratio = numerator / denominator
+            print(f"Split Date: {split_date}, Numerator: {numerator}, Denominator: {denominator}, Ratio: {split_ratio}")
+
+        date = pd.to_datetime(date, format="%Y-%m-%d")
+        split_date = pd.to_datetime(split_date, format="%Y-%m-%d")
+
+        print(f'date: {date}, splitDate: {split_date}')
+
+        if split_date > date:
+            print(f"\n\nThere are split.")
+            print(f"Split Date: {split_date}, Ratio: {split_ratio}")
+            return split_ratio
+
+        return None
+
+    except KeyError:
+        return None
+
+
+def updateStockForSplit(stock, ratio):
+    df = pd.read_csv(historyCsvPath)
+
+    for ind in df.index:
+        row = df.loc[ind]
+        if df.loc[ind]['Stock'] == stock:
+
+            lot = row['Lot'] * ratio
+            price = round(row['Price'] / ratio, 3)
+            total = row['Lot'] * row['Price']
+
+            df.loc[ind] = [df.loc[ind]['Date'], df.loc[ind]['Type'], df.loc[ind]['Stock'], price, lot, total, df.loc[ind]['Commission']]
+
+    df.to_csv(historyCsvPath, index=False)
+    update_AllStockFile(stock)
+
+
+def updateAllStockForSplit():
+    if not os.path.exists(stocksListCsvPath):
+        return
+
+    df = pd.read_csv(stocksListCsvPath)
+
+    for ind in df.index:
+        row = df.loc[ind]
+        if row['Updated Date'] == datetime.date.today():
+            continue
+
+        ratio = getSplitRatio(row['Stock'], row['Updated Date'])
+
+        if ratio is not None:
+            updateStockForSplit(row['Stock'], ratio)
+
+        row['Updated Date'] = datetime.date.today()
+
+    df.to_csv(stocksListCsvPath)
+    df.to_excel(stocksListExcelPath)
+
+
+def addStock_StocksListFile(pathCsv, pathExcel, newStock):
+    df = pd.read_csv(pathCsv)
+    df.reset_index(drop=True, inplace=True)
+
+    stockName = newStock['Stock'].values[0]
+    index = df[df['Stock'] == stockName].index
+    ratio = getSplitRatio(stockName, newStock['Date'].values[0])
+
+    if index.empty:
+        print(f"Case 1:\nDate: {newStock['Date'].values[0]}")
+        newRow = {'Stock': [stockName], 'Update Date': [datetime.date.today()]}
+        newRow = pd.DataFrame(newRow)
+        df = pd.concat([df, newRow])
+
+    else:
+        print(f"Case 2:\nDate: {df.loc[index]['Update Date'].values[0]}")
+        df.loc[index]['Update Date'] = datetime.date.today()
+
+    if ratio is not None:
+        updateStockForSplit(stockName, ratio)
+
+    df.to_excel(pathExcel, index=False)
+    df.to_csv(pathCsv, index=False)
+
+
+# PDF Part
+
 def extract_relevant_info(table):
     start_index = 0
     for i in range(len(table.iloc[:, 0])):
@@ -277,7 +440,7 @@ def extract_relevant_info(table):
 
 
 def beautify(info):
-    info.iloc[:, 0] = info.iloc[:, 0].apply(lambda date: date.replace('/', '-'))
+    info.iloc[:, 0] = info.iloc[:, 0].apply(lambda date: str(pd.to_datetime(date.replace('/', '-'), format="%d-%m-%Y")).split()[0])
     info.iloc[:, 1] = info.iloc[:, 1].apply(lambda name: str(name.split(" - ")[0]) + ".IS")
     info.iloc[:, 2] = info.iloc[:, 2].apply(lambda name: "Buy" if name == "ALIÞ" else "Sell")
     info.columns = range(info.columns.size)
