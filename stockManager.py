@@ -14,7 +14,7 @@ historyExcelPath = 'Files\\Total\\xlsx Files\\order_history.xlsx'
 allStocksExcelPath = 'Files\\Total\\xlsx Files\\all_stocks.xlsx'
 stocksListExcelPath = 'Files\\Total\\xlsx Files\\stocks_list.xlsx'
 
-fieldNames_history = ['Date', 'Type', 'Stock', 'Price', 'Lot', 'Total', 'Commission']
+fieldNames_history = ['Date', 'Type', 'Stock', 'Price', 'Lot', 'Total', 'Commission', 'Update Date']
 fieldNames_allStocks = ['Stock', 'Lot', 'Average', 'Total', 'Price', 'Current Total', 'Profit', 'Change Percentage',
                         'Commission']
 fieldNames_stocksList = ['Stock', 'Update Date']
@@ -28,11 +28,11 @@ def addNewStock(stock):
 
     createFilesIfNotExist(historyCsvPath, historyExcelPath, fieldNames_history)
     createFilesIfNotExist(allStocksCsvPath, allStocksExcelPath, fieldNames_allStocks)
-    createFilesIfNotExist(stocksListCsvPath, stocksListExcelPath, fieldNames_stocksList)
+    # createFilesIfNotExist(stocksListCsvPath, stocksListExcelPath, fieldNames_stocksList)
 
     addStock_TotalHistoryFile(historyCsvPath, historyExcelPath, newStock)
-    #addStock_AllStockFile(allStocksCsvPath, allStocksExcelPath, newStock)
-    addStock_StocksListFile(stocksListCsvPath, stocksListExcelPath, newStock)
+    # addStock_AllStockFile(allStocksCsvPath, allStocksExcelPath, newStock)
+    # addStock_StocksListFile(stocksListCsvPath, stocksListExcelPath, newStock)
 
 
 def createFilesIfNotExist(pathCsv, pathExcel, fieldNames):
@@ -46,68 +46,10 @@ def addStock_TotalHistoryFile(pathCsv, pathExcel, newStock):
     df = pd.read_csv(pathCsv)
     df.reset_index(drop=True, inplace=True)
     df = pd.concat([df, newStock])
+
     df.to_excel(pathExcel, index=False)
     df.to_csv(pathCsv, index=False)
     update_AllStockFile(newStock['Stock'].values[0])
-
-
-'''
-def calculateValues(stock, newStock):
-    stockName = newStock['Stock'].values[0]
-    lot = float(stock['Lot']) + float(newStock['Lot'].values[0])
-    total = round(stock['Principal Invested'] + newStock['Total'].values[0], 3)
-    price = round(get_live_price(stockName), 3)
-    currentTotal = round(price * lot, 3)
-    commission = round(stock['Commission'] + newStock['Commission'].values[0], 3)
-
-    if lot == 0:
-        average = 0
-        profit = total * -1
-        change = f'{0}%'
-    else:
-        average = round(total / lot, 3)
-        profit = round(currentTotal - total, 3)
-        change = f'{round((currentTotal - total) * 100 / total, 3)}%'
-
-    updatedStock = {'Stock': [stockName], 'Lot': [lot], 'Average': [average], 'Total': [total], 'Price': [price],
-                    'Current Total': [currentTotal], 'Profit': [profit], 'Change Percentage': [change],
-                    'Commission': [commission]}
-
-    return updatedStock
-'''
-
-
-'''
-def addStock_AllStockFile(pathCsv, pathExcel, newStock):
-    df = pd.read_csv(pathCsv)
-    df.reset_index(drop=True, inplace=True)
-    stockName = newStock['Stock'].values[0]
-    stock = getInformationByStock(stockName)
-
-    updatedStock = calculateValues(stock, newStock)
-    updatedStock_df = pd.DataFrame(updatedStock)
-
-    check = False
-    for i in df.index:
-        stock = df.loc[i, 'Stock']
-        if stock == stockName:
-            df.loc[i] = updatedStock_df.loc[0]
-            df = df.drop(df.index[-1])
-            check = True
-            break
-
-    if not check:
-        if len(df) == 0:
-            df = pd.concat([df, updatedStock_df])
-        else:
-            df = pd.concat([df[:-1], updatedStock_df])
-
-    df = updateTotalRow_AllStockFile(df)
-
-    df.to_excel(pathExcel, index=False)
-    df.to_csv(pathCsv, index=False)
-'''
-
 
 def getStocksList():
     historyCsvPath = 'Files\\Total\\csv Files\\order_history.csv'
@@ -239,7 +181,6 @@ def checkValidLotAmount(stockName, lot):
 def groupStock(pathCsv, stock):
     df = pd.read_csv(pathCsv)
     gk = df.groupby('Stock')
-
     for name, group in gk:
         if stock == name:
             return group.reset_index(drop=True)
@@ -248,7 +189,6 @@ def groupStock(pathCsv, stock):
 
 def calculateStocksInf(stockName):
     gk = groupStock(historyCsvPath, stockName)
-    print(f'gk:\n{gk}')
 
     stock = gk.loc[0]['Stock']
     lot = gk['Lot'].sum()
@@ -271,6 +211,9 @@ def calculateStocksInf(stockName):
 
 
 def updateTotalRow_AllStockFile(df):
+    if len(df) > 1:
+        df = df[:-1]
+
     total_sum = round(df[df['Total'] >= 0]['Total'].sum(), 3)
     currentTotal_sum = round(df['Current Total'].sum(), 3)
     profit_sum = round(df['Profit'].sum(), 3)
@@ -292,6 +235,7 @@ def updateTotalRow_AllStockFile(df):
 
     df.reset_index(drop=True, inplace=True)
     total_df.reset_index(drop=True, inplace=True)
+
     df = pd.concat([df, total_df])
 
     return df
@@ -302,19 +246,24 @@ def update_AllStockFile(stock):
         return
 
     df = pd.read_csv(allStocksCsvPath)
+    ind = None
+    check = False
 
     for ind in df.index:
         if df.loc[ind]['Stock'] == '-':
+            check = True
             break
         if df.loc[ind]['Stock'] == stock:
             stock = df.loc[ind]['Stock']
-            print("Stock: ", stock)
             df_stock = calculateStocksInf(stock)
-            print(f'df_stock:\n{df_stock}')
             df.loc[ind] = df_stock
-            print(f'df.loc[ind]:\n{df.loc[ind]}')
+            check = True
+            break
 
-    print(f'\n\ndf:\n{df}')
+    if not check:
+        df_stock = calculateStocksInf(stock)
+        df.loc[ind] = df_stock
+
     df = updateTotalRow_AllStockFile(df)
     df.reset_index(drop=True, inplace=True)
     df.to_csv(allStocksCsvPath, index=False)
@@ -322,9 +271,39 @@ def update_AllStockFile(stock):
 
 
 # Stocks Lists Part
+def updateStockInfForSplit(stock):
+    stockName = stock['Stock'].values[0]
+    date = stock['Update Date'].values[0]
+
+    split_ratio = checkIsSplit(stockName, date)
+    lot = round(stock['Lot'].values[0] * split_ratio, 3)
+    price = round(stock['Price'].values[0] / split_ratio, 3)
+    total = round(stock['Lot'].values[0] * stock['Price'].values[0], 3)
+    updateDate = datetime.date.today()
+
+    stock_list = [stock['Date'].values[0], stock['Type'].values[0], stock['Stock'].values[0], price,
+                  lot, total, stock['Commission'].values[0], updateDate]
+
+    return stock_list
 
 
-def getSplitRatio(stock, date):
+def checkIsSplit(stock, date):
+    split_date, split_ratio = getSplitInfos(stock)
+
+    if split_date is None:
+        return 1
+
+    date = pd.to_datetime(date, format="%Y-%m-%d")
+    split_date = pd.to_datetime(split_date, format="%Y-%m-%d")
+
+    if split_date > date:
+        print(f"There are split\nSplit Date: {split_date}, Ratio: {split_ratio}")
+        return split_ratio
+
+    return 1
+
+
+def getSplitInfos(stock):
     try:
         stock_splits = get_splits(stock)
 
@@ -337,86 +316,36 @@ def getSplitRatio(stock, date):
             numerator = float(split_ratio[0])
             denominator = float(split_ratio[1])
             split_ratio = numerator / denominator
-            print(f"Split Date: {split_date}, Numerator: {numerator}, Denominator: {denominator}, Ratio: {split_ratio}")
+            print(f"(*) Split Date: {split_date}, Numerator: {numerator}, Denominator: {denominator}, Ratio: {split_ratio}")
 
-        date = pd.to_datetime(date, format="%Y-%m-%d")
-        split_date = pd.to_datetime(split_date, format="%Y-%m-%d")
-
-        print(f'date: {date}, splitDate: {split_date}')
-
-        if split_date > date:
-            print(f"\n\nThere are split.")
-            print(f"Split Date: {split_date}, Ratio: {split_ratio}")
-            return split_ratio
-
-        return None
+        return split_date, split_ratio
 
     except KeyError:
-        return None
+        return None, None
 
 
-def updateStockForSplit(stock, ratio):
+def updateSpecificStockForSplit(stockName):
     df = pd.read_csv(historyCsvPath)
 
     for ind in df.index:
-        row = df.loc[ind]
-        if df.loc[ind]['Stock'] == stock:
-
-            lot = row['Lot'] * ratio
-            price = round(row['Price'] / ratio, 3)
-            total = row['Lot'] * row['Price']
-
-            df.loc[ind] = [df.loc[ind]['Date'], df.loc[ind]['Type'], df.loc[ind]['Stock'], price, lot, total, df.loc[ind]['Commission']]
+        if df.loc[ind]['Stock'] == stockName:
+            data = df.loc[ind]
+            data_dict = data.to_dict()
+            data_dict = {key:  pd.Series([value]) for key, value in data_dict.items()}
+            updated_stock = updateStockInfForSplit(data_dict)
+            df.loc[ind] = updated_stock
 
     df.to_csv(historyCsvPath, index=False)
-    update_AllStockFile(stock)
+    update_AllStockFile(stockName)
 
 
-def updateAllStockForSplit():
-    if not os.path.exists(stocksListCsvPath):
-        return
-
-    df = pd.read_csv(stocksListCsvPath)
+def updateAllStocksForSplit():
+    df = pd.read_csv(allStocksCsvPath)
 
     for ind in df.index:
-        row = df.loc[ind]
-        if row['Updated Date'] == datetime.date.today():
-            continue
-
-        ratio = getSplitRatio(row['Stock'], row['Updated Date'])
-
-        if ratio is not None:
-            updateStockForSplit(row['Stock'], ratio)
-
-        row['Updated Date'] = datetime.date.today()
-
-    df.to_csv(stocksListCsvPath)
-    df.to_excel(stocksListExcelPath)
-
-
-def addStock_StocksListFile(pathCsv, pathExcel, newStock):
-    df = pd.read_csv(pathCsv)
-    df.reset_index(drop=True, inplace=True)
-
-    stockName = newStock['Stock'].values[0]
-    index = df[df['Stock'] == stockName].index
-    ratio = getSplitRatio(stockName, newStock['Date'].values[0])
-
-    if index.empty:
-        print(f"Case 1:\nDate: {newStock['Date'].values[0]}")
-        newRow = {'Stock': [stockName], 'Update Date': [datetime.date.today()]}
-        newRow = pd.DataFrame(newRow)
-        df = pd.concat([df, newRow])
-
-    else:
-        print(f"Case 2:\nDate: {df.loc[index]['Update Date'].values[0]}")
-        df.loc[index]['Update Date'] = datetime.date.today()
-
-    if ratio is not None:
-        updateStockForSplit(stockName, ratio)
-
-    df.to_excel(pathExcel, index=False)
-    df.to_csv(pathCsv, index=False)
+        if df.loc[ind]['Stock'] == '-':
+            break
+        updateSpecificStockForSplit(df.loc[ind]['Stock'])
 
 
 # PDF Part
@@ -440,7 +369,8 @@ def extract_relevant_info(table):
 
 
 def beautify(info):
-    info.iloc[:, 0] = info.iloc[:, 0].apply(lambda date: str(pd.to_datetime(date.replace('/', '-'), format="%d-%m-%Y")).split()[0])
+    info.iloc[:, 0] = info.iloc[:, 0].apply(
+        lambda date: str(pd.to_datetime(date.replace('/', '-'), format="%d-%m-%Y")).split()[0])
     info.iloc[:, 1] = info.iloc[:, 1].apply(lambda name: str(name.split(" - ")[0]) + ".IS")
     info.iloc[:, 2] = info.iloc[:, 2].apply(lambda name: "Buy" if name == "ALIÞ" else "Sell")
     info.columns = range(info.columns.size)
@@ -527,7 +457,8 @@ def approvePdfInf():
         stock = {'Date': [row['Date']], 'Type': [row['Type']], 'Stock': [row['Stock']],
                  'Price': [price], 'Lot': [lot],
                  'Total': [round(price * lot, 3)],
-                 'Commission': [round(commission, 3)]}
+                 'Commission': [round(commission, 3)],
+                 'Update Date': [row['Date']]}
 
         addNewStock(stock)
 

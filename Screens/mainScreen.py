@@ -44,7 +44,7 @@ def infPart(frame):
     updateBtn = Button(frame, text="Update For Split", font=(fontType, fontSize))
     updateBtn.config(fg=btnForegroundColor, bg=btnBackgroundColor,
                      activeforeground=hoverBtnForegroundColor, activebackground=hoverBtnBackgroundColor)
-    updateBtn.config(command=sm.updateAllStockForSplit)
+    updateBtn.config(command=sm.updateAllStocksForSplit)
     updateBtn.place(relx=0.88, rely=0.1, relwidth=0.1, relheight=0.05)
 
     # Information Part

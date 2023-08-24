@@ -245,7 +245,7 @@ def createNewTransaction():
             tkinter.messagebox.showwarning(title="Error", message="There are not enough lot for sell")
             return
 
-    stock = {'Date': [date], 'Type': [type], 'Stock': [name], 'Price': [price], 'Lot': [lot], 'Total': [round(price * lot, 3)], 'Commission': [commission]}
+    stock = {'Date': [date], 'Type': [type], 'Stock': [name], 'Price': [price], 'Lot': [lot], 'Total': [round(price * lot, 3)], 'Commission': [commission], 'Update Date': [date]}
     stockM.addNewStock(stock)
 
 
