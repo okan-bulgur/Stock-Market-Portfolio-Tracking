@@ -8,16 +8,13 @@ from yahoo_fin.stock_info import *
 
 historyCsvPath = 'Files\\csv Files\\order_history.csv'
 allStocksCsvPath = 'Files\\csv Files\\all_stocks.csv'
-stocksListCsvPath = 'Files\\csv Files\\stocks_list.csv'
 
 historyExcelPath = 'Files\\xlsx Files\\order_history.xlsx'
 allStocksExcelPath = 'Files\\xlsx Files\\all_stocks.xlsx'
-stocksListExcelPath = 'Files\\xlsx Files\\stocks_list.xlsx'
 
 fieldNames_history = ['Date', 'Type', 'Stock', 'Price', 'Lot', 'Total', 'Commission', 'Update Date']
 fieldNames_allStocks = ['Stock', 'Lot', 'Average', 'Total', 'Price', 'Current Total', 'Profit', 'Change Percentage',
                         'Commission']
-fieldNames_stocksList = ['Stock', 'Update Date']
 
 pdfResult = None
 
@@ -28,11 +25,8 @@ def addNewStock(stock):
 
     createFilesIfNotExist(historyCsvPath, historyExcelPath, fieldNames_history)
     createFilesIfNotExist(allStocksCsvPath, allStocksExcelPath, fieldNames_allStocks)
-    # createFilesIfNotExist(stocksListCsvPath, stocksListExcelPath, fieldNames_stocksList)
 
     addStock_TotalHistoryFile(historyCsvPath, historyExcelPath, newStock)
-    # addStock_AllStockFile(allStocksCsvPath, allStocksExcelPath, newStock)
-    # addStock_StocksListFile(stocksListCsvPath, stocksListExcelPath, newStock)
 
 
 def createFilesIfNotExist(pathCsv, pathExcel, fieldNames):
