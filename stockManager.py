@@ -6,13 +6,13 @@ import tabula
 from tkinter import *
 from yahoo_fin.stock_info import *
 
-historyCsvPath = 'Files\\Total\\csv Files\\order_history.csv'
-allStocksCsvPath = 'Files\\Total\\csv Files\\all_stocks.csv'
-stocksListCsvPath = 'Files\\Total\\csv Files\\stocks_list.csv'
+historyCsvPath = 'Files\\csv Files\\order_history.csv'
+allStocksCsvPath = 'Files\\csv Files\\all_stocks.csv'
+stocksListCsvPath = 'Files\\csv Files\\stocks_list.csv'
 
-historyExcelPath = 'Files\\Total\\xlsx Files\\order_history.xlsx'
-allStocksExcelPath = 'Files\\Total\\xlsx Files\\all_stocks.xlsx'
-stocksListExcelPath = 'Files\\Total\\xlsx Files\\stocks_list.xlsx'
+historyExcelPath = 'Files\\xlsx Files\\order_history.xlsx'
+allStocksExcelPath = 'Files\\xlsx Files\\all_stocks.xlsx'
+stocksListExcelPath = 'Files\\xlsx Files\\stocks_list.xlsx'
 
 fieldNames_history = ['Date', 'Type', 'Stock', 'Price', 'Lot', 'Total', 'Commission', 'Update Date']
 fieldNames_allStocks = ['Stock', 'Lot', 'Average', 'Total', 'Price', 'Current Total', 'Profit', 'Change Percentage',
@@ -51,8 +51,8 @@ def addStock_TotalHistoryFile(pathCsv, pathExcel, newStock):
     df.to_csv(pathCsv, index=False)
     update_AllStockFile(newStock['Stock'].values[0])
 
+
 def getStocksList():
-    historyCsvPath = 'Files\\Total\\csv Files\\order_history.csv'
     stocks = []
 
     if os.path.exists(historyCsvPath):
@@ -79,14 +79,12 @@ def updateCurrentPrices(csvPath, excelPath):
 
 
 def updateInformations():
-    stockCsvPath = 'Files\\Total\\csv Files\\all_stocks.csv'
-    stockExcelPath = 'Files\\Total\\xlsx Files\\all_stocks.xlsx'
-    if not os.path.exists(stockCsvPath):
+    if not os.path.exists(allStocksCsvPath):
         return
 
-    updateCurrentPrices(stockCsvPath, stockExcelPath)
+    updateCurrentPrices(allStocksCsvPath, allStocksExcelPath)
 
-    df = pd.read_csv(stockCsvPath)
+    df = pd.read_csv(allStocksCsvPath)
     for i in df.index:
         stock = df.iloc[i]['Stock']
         if stock == '-':
@@ -94,7 +92,7 @@ def updateInformations():
         lot = float(df.iloc[i]['Lot'])
         total = df.iloc[i]['Total']
 
-        price = round(get_live_price(stock), 3)
+        price = float(df.iloc[i]['Price'])
         currentTotal = round(price * lot, 3)
         profit = round(currentTotal - total, 3)
         changePerc = round((currentTotal - total) * 100 / total, 3)
@@ -104,8 +102,8 @@ def updateInformations():
         df.at[i, 'Profit'] = profit
         df.at[i, 'Change Percentage'] = f'{changePerc}%'
 
-    df.to_excel(stockExcelPath, index=False)
-    df.to_csv(stockCsvPath, index=False)
+    df.to_excel(allStocksExcelPath, index=False)
+    df.to_csv(allStocksCsvPath, index=False)
 
 
 def getInformationByStock(stock):
@@ -121,12 +119,11 @@ def getInformationByStock(stock):
     }
 
     updateInformations()
-    stockCsvPath = f'Files\\Total\\csv Files\\all_stocks.csv'
 
-    if not os.path.exists(stockCsvPath):
+    if not os.path.exists(allStocksCsvPath):
         return information
 
-    df = pd.read_csv(stockCsvPath)
+    df = pd.read_csv(allStocksCsvPath)
 
     for i in df.index:
         if df.iloc[i]['Stock'] == stock:
@@ -154,12 +151,10 @@ def getPortfolioInf():
 
     updateInformations()
 
-    stockCsvPath = f'Files\\Total\\csv Files\\all_stocks.csv'
-
-    if not os.path.exists(stockCsvPath):
+    if not os.path.exists(allStocksCsvPath):
         return information
 
-    df = pd.read_csv(stockCsvPath)
+    df = pd.read_csv(allStocksCsvPath)
     information = {
         'Principal Invested': df.iloc[-1]['Total'],
         'Current Total': df.iloc[-1]['Current Total'],
@@ -193,17 +188,22 @@ def calculateStocksInf(stockName):
     stock = gk.loc[0]['Stock']
     lot = gk['Lot'].sum()
     total = gk['Total'].sum()
-    average = round(total / lot, 3)
     price = round(get_live_price(stock), 3)
     currentTotal = round(lot * price, 3)
     profit = round(currentTotal - total, 3)
-    changePerc = f'{round((currentTotal - total) * 100 / total, 3)}%'
     commission = round(gk['Commission'].sum(), 3)
+
+    if total == 0:
+        changePerc = '-'
+    else:
+        changePerc = f'{round((currentTotal - total) * 100 / total, 3)}%'
 
     if lot == 0:
         average = 0
         profit = total * -1
         changePerc = f'{0}%'
+    else:
+        average = round(total / lot, 3)
 
     updatedStock = [stock, lot, average, total, price, currentTotal, profit, changePerc, commission]
 
@@ -211,9 +211,6 @@ def calculateStocksInf(stockName):
 
 
 def updateTotalRow_AllStockFile(df):
-    if len(df) > 1:
-        df = df[:-1]
-
     total_sum = round(df[df['Total'] >= 0]['Total'].sum(), 3)
     currentTotal_sum = round(df['Current Total'].sum(), 3)
     profit_sum = round(df['Profit'].sum(), 3)
@@ -251,18 +248,17 @@ def update_AllStockFile(stock):
 
     for ind in df.index:
         if df.loc[ind]['Stock'] == '-':
-            check = True
             break
         if df.loc[ind]['Stock'] == stock:
-            stock = df.loc[ind]['Stock']
             df_stock = calculateStocksInf(stock)
             df.loc[ind] = df_stock
+            df = df[:-1]
             check = True
             break
 
     if not check:
         df_stock = calculateStocksInf(stock)
-        df.loc[ind] = df_stock
+        df.loc[df.shape[0]-1] = df_stock
 
     df = updateTotalRow_AllStockFile(df)
     df.reset_index(drop=True, inplace=True)
@@ -316,7 +312,8 @@ def getSplitInfos(stock):
             numerator = float(split_ratio[0])
             denominator = float(split_ratio[1])
             split_ratio = numerator / denominator
-            print(f"(*) Split Date: {split_date}, Numerator: {numerator}, Denominator: {denominator}, Ratio: {split_ratio}")
+            print(
+                f"(*) Split Date: {split_date}, Numerator: {numerator}, Denominator: {denominator}, Ratio: {split_ratio}")
 
         return split_date, split_ratio
 
@@ -331,7 +328,7 @@ def updateSpecificStockForSplit(stockName):
         if df.loc[ind]['Stock'] == stockName:
             data = df.loc[ind]
             data_dict = data.to_dict()
-            data_dict = {key:  pd.Series([value]) for key, value in data_dict.items()}
+            data_dict = {key: pd.Series([value]) for key, value in data_dict.items()}
             updated_stock = updateStockInfForSplit(data_dict)
             df.loc[ind] = updated_stock
 
@@ -372,7 +369,7 @@ def beautify(info):
     info.iloc[:, 0] = info.iloc[:, 0].apply(
         lambda date: str(pd.to_datetime(date.replace('/', '-'), format="%d-%m-%Y")).split()[0])
     info.iloc[:, 1] = info.iloc[:, 1].apply(lambda name: str(name.split(" - ")[0]) + ".IS")
-    info.iloc[:, 2] = info.iloc[:, 2].apply(lambda name: "Buy" if name == "ALIÞ" else "Sell")
+    info.iloc[:, 2] = info.iloc[:, 2].apply(lambda name: "Buy" if name == "ALIŞ" else "Sell")
     info.columns = range(info.columns.size)
     return info
 

@@ -210,7 +210,7 @@ def getCommission(inputBox, outputLabel):
     try:
         global commission
         commission = float(inputBox.get())
-        if commission <= 0:
+        if commission < 0:
             raise ValueError
         outputLabel.config(text=commission)
     except ValueError:
@@ -246,6 +246,7 @@ def createNewTransaction():
             return
 
     stock = {'Date': [date], 'Type': [type], 'Stock': [name], 'Price': [price], 'Lot': [lot], 'Total': [round(price * lot, 3)], 'Commission': [commission], 'Update Date': [date]}
+    lot *= -1
     stockM.addNewStock(stock)
 
 
